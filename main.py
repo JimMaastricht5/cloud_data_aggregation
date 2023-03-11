@@ -56,8 +56,26 @@ def load_bird_occurrences(url_prefix, dates):
             print(e)
             dates.remove(date)  # remove date if not found
     df = build_common_name(df, 'Species')  # build common name for merged df
+    df_species = df['Species'].str.split(' ', n=1, expand=True)  # drop off id number
+    df['Species'] = df_species[1]  # place data back in species col
     df = df.drop(['Unnamed: 0'], axis='columns')
     return df
+
+def daily_summary(df):
+    df_daily = df.groupby(['Feeder Name', 'Species', 'Common Name', 'Year', 'Month', 'Day'])['Common Name'].count()
+    return df_daily
+
+
+def append_to_daily_history(url_prefix, df):
+    try:
+        urllib.request.urlretrieve(url_prefix + 'daily_history.csv', 'daily_history.csv')
+        df_daily_history = pd.read_csv('daily_history.csv')
+        df_new_daily_history = pd.concat([df_daily_history, df])
+        print(df_new_daily_history)
+    except urllib.error.URLError as e:
+        print(f'no daily history found')
+        print(e)
+    return
 
 
 def main():
@@ -68,9 +86,9 @@ def main():
     dates.append((datetime.now(tz) - timedelta(days=1)).strftime('%Y-%m-%d'))
     dates.append((datetime.now(tz) - timedelta(days=2)).strftime('%Y-%m-%d'))
     df = load_bird_occurrences(url_prefix, [dates[1]])  # only process yesterday's date, date[1]
-    print(df.Hour)
-    print(df.columns)
-
+    df_daily_summary = daily_summary(df)
+    print(df_daily_summary)
+    append_to_daily_history(url_prefix, df_daily_summary)
     return
 
 
