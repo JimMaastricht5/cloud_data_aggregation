@@ -36,9 +36,8 @@ def build_common_name(df, target_col):
     return df
 
 
-def load_bird_occurrences(dates):
+def load_bird_occurrences(url_prefix, dates):
     # setup df like file, pulled from streamlit website function
-    url_prefix = 'https://storage.googleapis.com/tweeterssp-web-site-contents/'
     df = pd.DataFrame(data=None, columns=['Unnamed: 0', 'Feeder Name', 'Species',
                                           'Date Time', 'Hour'], dtype=None)
     df['Date Time'] = pd.to_datetime(df['Date Time'])
@@ -47,11 +46,10 @@ def load_bird_occurrences(dates):
             urllib.request.urlretrieve(url_prefix + date + 'web_occurrences.csv', 'web_occurrences.csv')
             df_read = pd.read_csv('web_occurrences.csv')
             df_read['Date Time'] = pd.to_datetime(df_read['Date Time'])
-            df_read['Hour'] = pd.to_numeric(df_read['Date Time'].dt.strftime('%H')) + \
-                pd.to_numeric(df_read['Date Time'].dt.strftime('%M')) / 60
-            df_read['Day.Hour'] = pd.to_numeric(df_read['Date Time'].dt.strftime('%d')) + \
-                pd.to_numeric(df_read['Date Time'].dt.strftime('%H')) / 100 + \
-                pd.to_numeric(df_read['Date Time'].dt.strftime('%M')) / 100 / 60
+            df_read['Year'] = df_read['Date Time'].dt.year
+            df_read['Month'] = df_read['Date Time'].dt.month
+            df_read['Day'] = df_read['Date Time'].dt.day
+            df_read['Hour'] = df_read['Date Time'].dt.hour
             df = pd.concat([df, df_read])
         except urllib.error.URLError as e:
             print(f'no web occurrences found for {date}')
@@ -63,13 +61,15 @@ def load_bird_occurrences(dates):
 
 
 def main():
+    url_prefix = 'https://storage.googleapis.com/tweeterssp-web-site-contents/'
     dates = []
     tz = pytz.timezone("America/Chicago")  # localize time to current madison wi cst bird feeder
     dates.append(datetime.now(tz).strftime('%Y-%m-%d'))
     dates.append((datetime.now(tz) - timedelta(days=1)).strftime('%Y-%m-%d'))
     dates.append((datetime.now(tz) - timedelta(days=2)).strftime('%Y-%m-%d'))
-    df = load_bird_occurrences([dates[1]])  # only process yesterday's date, date[1]
-    print(df)
+    df = load_bird_occurrences(url_prefix, [dates[1]])  # only process yesterday's date, date[1]
+    print(df.Hour)
+    print(df.columns)
 
     return
 
