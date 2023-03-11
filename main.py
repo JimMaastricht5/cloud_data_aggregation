@@ -24,6 +24,7 @@ from datetime import datetime
 from datetime import timedelta
 import pytz
 import urllib.request
+from urllib.error import HTTPError
 
 
 def build_common_name(df, target_col):
@@ -36,7 +37,7 @@ def build_common_name(df, target_col):
 
 
 def load_bird_occurrences(dates):
-    # setup df like file, pulled from streamlit web site function
+    # setup df like file, pulled from streamlit website function
     url_prefix = 'https://storage.googleapis.com/tweeterssp-web-site-contents/'
     df = pd.DataFrame(data=None, columns=['Unnamed: 0', 'Feeder Name', 'Species',
                                           'Date Time', 'Hour'], dtype=None)
@@ -47,10 +48,10 @@ def load_bird_occurrences(dates):
             df_read = pd.read_csv('web_occurrences.csv')
             df_read['Date Time'] = pd.to_datetime(df_read['Date Time'])
             df_read['Hour'] = pd.to_numeric(df_read['Date Time'].dt.strftime('%H')) + \
-                              pd.to_numeric(df_read['Date Time'].dt.strftime('%M')) / 60
+                pd.to_numeric(df_read['Date Time'].dt.strftime('%M')) / 60
             df_read['Day.Hour'] = pd.to_numeric(df_read['Date Time'].dt.strftime('%d')) + \
-                                  pd.to_numeric(df_read['Date Time'].dt.strftime('%H')) / 100 + \
-                                  pd.to_numeric(df_read['Date Time'].dt.strftime('%M')) / 100 / 60
+                pd.to_numeric(df_read['Date Time'].dt.strftime('%H')) / 100 + \
+                pd.to_numeric(df_read['Date Time'].dt.strftime('%M')) / 100 / 60
             df = pd.concat([df, df_read])
         except urllib.error.URLError as e:
             print(f'no web occurrences found for {date}')
@@ -60,19 +61,19 @@ def load_bird_occurrences(dates):
     df = df.drop(['Unnamed: 0'], axis='columns')
     return df
 
+
 def main():
     dates = []
-    Tz = pytz.timezone("America/Chicago")  # localize time to current madison wi cst bird feeder
-    dates.append(datetime.now(Tz).strftime('%Y-%m-%d'))
-    dates.append((datetime.now(Tz) - timedelta(days=1)).strftime('%Y-%m-%d'))
-    dates.append((datetime.now(Tz) - timedelta(days=2)).strftime('%Y-%m-%d'))
-    df = load_bird_occurrences([dates[1]])  # only process yesterdays date, date[1]
+    tz = pytz.timezone("America/Chicago")  # localize time to current madison wi cst bird feeder
+    dates.append(datetime.now(tz).strftime('%Y-%m-%d'))
+    dates.append((datetime.now(tz) - timedelta(days=1)).strftime('%Y-%m-%d'))
+    dates.append((datetime.now(tz) - timedelta(days=2)).strftime('%Y-%m-%d'))
+    df = load_bird_occurrences([dates[1]])  # only process yesterday's date, date[1]
     print(df)
 
     return
 
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     main()
-
-
